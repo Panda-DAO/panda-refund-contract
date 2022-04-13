@@ -35,7 +35,6 @@ contract PandaRefund is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IERC20 public pandaToken;
-    IERC20 public JBXToken;
     ITerminalV1_1  public terminalv1_1;
     uint256 public treasuryRedeemAmount;
     bytes32 public merkleRoot;
@@ -44,8 +43,9 @@ contract PandaRefund is Ownable, ReentrancyGuard {
     mapping(address => uint256) public refundMap;
     uint256 public lastNow;
     uint256 public timeInterval = 7 days;
+    uint256 public refundRateBase = 10000;
+    uint256 public refundRateValue = 9584;
 
-    uint256 public constant JBXTotal = 6_364_650 ether;
     uint256 public constant PandaTotal = 1_928_747_627 ether;
     uint256 public constant PandaPerETH = 500_000;
     uint256 public constant PANDADAO_PROJECT_ID = 573;//409;
@@ -53,11 +53,12 @@ contract PandaRefund is Ownable, ReentrancyGuard {
     
 
 
-    event Redeem(address recipient, uint256 tokenAmount, uint256 receiveEther);
+    event Redeem(address indexed recipient, uint256 tokenAmount, uint256 receiveEther);
     event Treasury_Redeem(address recipient, uint256 tokenAmount);
     event MerkleRootChanged(bytes32 merkleRoot);
     event RefundOpenChanged(bool open);
     event TimeIntervalChanged(uint256 time);
+    event RefundRateValueChanged(uint256 time);
     event WithdrawERC20(address recipient, address tokenAddress, uint256 tokenAmount);
     event WithdrawEther(address recipient, uint256 amount);
 
@@ -79,12 +80,10 @@ contract PandaRefund is Ownable, ReentrancyGuard {
      */
     constructor(
         address pandaToken_,
-        address jbxToken_,
-        address terminalv1_1_,
+        address terminalv1_1_
     )
     {
         pandaToken = IERC20(pandaToken_);
-        JBXToken = IERC20(jbxToken_);
         terminalv1_1 = ITerminalV1_1(terminalv1_1_);
         lastNow = block.timestamp;
     }
@@ -109,9 +108,7 @@ contract PandaRefund is Ownable, ReentrancyGuard {
         terminalv1_1.redeem(msg.sender, PANDADAO_PROJECT_ID, amount, 0, payable(msg.sender), false);
         treasuryRedeemAmount += amount;
 
-        uint256 jbxAmount = amount * JBXTotal * 2 / PandaTotal;
-        JBXToken.safeTransfer(msg.sender, jbxAmount);
-        uint256 etherAmount = amount / PandaPerETH * 95 / 100;
+        uint256 etherAmount = amount / PandaPerETH * refundRateValue / refundRateBase;
         (bool success,) = msg.sender.call{value:etherAmount}("");
         require(success, "redeem ether fail!");
         emit Redeem(msg.sender, amount, etherAmount);
@@ -149,6 +146,11 @@ contract PandaRefund is Ownable, ReentrancyGuard {
     function setTimeInterval(uint256 timeInterval_) external onlyOwner {
         timeInterval = timeInterval_;
         emit TimeIntervalChanged(timeInterval_);
+    }
+
+    function setRefundRateValue(uint256 value_) external onlyOwner {
+        refundRateValue = value_;
+        emit RefundRateValueChanged(value_);
     }
 
 

@@ -14,12 +14,18 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const Greeter = await hre.ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+  const PandaRefund = await hre.ethers.getContractFactory("PandaRefund");
+  const RinkebyOperatorStoreAddress = "0x5dA2E4Ba83569fb7A22a4aDE14bBEf1236168406";
+  const RinkebyTerminalV1_1Address = "0xE7432E80A75F957121Cb523BA842Db27C6C25F69";
+  const RinkebyPandaAddress = "0xb7AA51Cc7dc9A73D627c526A8b189B571F784228";
+  const RinkebyJBXAddress = "0x58ad6eA4a02D7ff2D4Fc6A8F682e14459234300E";
+  const pandaRefund = await PandaRefund.deploy(RinkebyPandaAddress, RinkebyTerminalV1_1Address);
+  
 
-  await greeter.deployed();
+  await pandaRefund.deployed();
 
-  console.log("Greeter deployed to:", greeter.address);
+  console.log("token deployed to:", pandaRefund.address);
+  console.log("deployed transaction : ", pandaRefund.deployTransaction);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
